@@ -8,7 +8,7 @@ interface todos {
 
 let idTracker = 2
 export const App = () => {
-  const [todoTitle, setTodoTitle] = useState<todos['title']>('')
+  const [height, setHeight] = useState('')
   const [todos, setTodos] = useState<todos[]>([
     { title: 'Todo 1', id: 0, edit: false },
     {
@@ -18,14 +18,12 @@ export const App = () => {
     }
   ])
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setTodoTitle(e.target.value)
-  }
-
   const handleTodoChange = (
-    e: ChangeEvent<HTMLInputElement>,
+    e: ChangeEvent<HTMLTextAreaElement> | ChangeEvent<HTMLInputElement>,
     todoId: number
   ) => {
+    const newHeight = e.target.scrollHeight
+    setHeight(String(newHeight))
     const updatedTodos = todos.map((todo) => {
       if (todo.id === todoId) {
         return { ...todo, title: e.target.value }
@@ -35,13 +33,14 @@ export const App = () => {
     setTodos(updatedTodos)
   }
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setTodos([...todos, { title: todoTitle, id: idTracker++, edit: false }])
-    setTodoTitle('')
-  }
-
-  const changeToInput = (todoId: number) => {
+  const changeToInput = (
+    e:
+      | React.FocusEvent<HTMLTextAreaElement, Element>
+      | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    todoId: number
+  ) => {
+    const newHeight = e.target.scrollHeight
+    setHeight(String(newHeight))
     const updatedTodos = todos.map((curr) => {
       if (curr.id === todoId) {
         return { ...curr, edit: !curr.edit }
@@ -63,24 +62,24 @@ export const App = () => {
     setTodos(newTodos)
   }
 
+  const handleAddTodo = () => {
+    setHeight('1rem')
+    setTodos([{ title: '', edit: true, id: idTracker++ }, ...todos])
+  }
+
   return (
-    <main className="flex flex-col gap-4 p-4 items-center justify-center ">
+    <main className="flex flex-col gap-4 p-4 justify-center ">
       <h1 className="text-2xl">Todo App</h1>
+
       <section>
-        <form
-          onSubmit={(e) => {
-            handleSubmit(e)
+        <button
+          className="border border-white text-2xl rounded-full w-8 h-8"
+          onClick={() => {
+            handleAddTodo()
           }}
         >
-          <input
-            className="bg-white/10 mb-1 border-transparent rounded-bl-[255px_15px] rounded-br-[15px_255px] rounded-tl-[255px_15px] rounded-tr-[15px_255px] p-2 m-px[5px]"
-            type="text"
-            value={todoTitle}
-            onChange={(e) => {
-              handleChange(e)
-            }}
-          />
-        </form>
+          +
+        </button>
         <ul className="flex flex-col">
           {todos.map((todo: todos, index) => (
             <li
@@ -88,10 +87,11 @@ export const App = () => {
               className="border-b rounded-bl-[270px_2px] rounded-br-[270px_2px] border-sky-800 bg-transparent p-2 m-px[5px]"
             >
               {todo.edit ? (
-                <input
-                  type="text"
-                  onBlur={() => {
-                    changeToInput(todo.id)
+                <textarea
+                  className="resize-none outline-none scrollbar-none bg-transparent w-full h-auto overflow-y-auto"
+                  style={{ height }}
+                  onBlur={(e) => {
+                    changeToInput(e, todo.id)
                   }}
                   value={todo.title}
                   autoFocus
@@ -101,12 +101,12 @@ export const App = () => {
                 />
               ) : (
                 <div
-                  className="flex justify-between"
-                  onClick={() => {
-                    changeToInput(todo.id)
+                  className="flex justify-between w-full"
+                  onClick={(e) => {
+                    changeToInput(e, todo.id)
                   }}
                 >
-                  {todo.title}
+                  <span className="break-words w-11/12">{todo.title}</span>
                   <button
                     onClick={(e) => {
                       deleteTodo(e, todo.id)
